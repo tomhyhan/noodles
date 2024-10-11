@@ -9,19 +9,21 @@ from PIL import Image
 import numpy as np
 
 
-MAX_IMAGES = 1000
-IMAGES_PER_REQUEST = 150
-
 def image_search(search_term, api_key):
     search_url = "https://api.bing.microsoft.com/v7.0/images/search"
+    print(search_term, api_key)
     headers = {"Ocp-Apim-Subscription-Key" : api_key}
 
-    
-    for offset in range(0, MAX_IMAGES, IMAGES_PER_REQUEST):
-        
+    totalEstimatedMatches = float('inf')
+    offset = 0
+    n_searches = 150
+    # data["totalEstimatedMatches"]
+    while offset + n_searches <= totalEstimatedMatches:
+    # for offset in range(0, MAX_IMAGES, IMAGES_PER_REQUEST):
+        print(totalEstimatedMatches)
         params = {"q": search_term, 
                   "imageType": "photo", 
-                  "count": IMAGES_PER_REQUEST,
+                  "count": n_searches,
                   "offset": offset
                 }
     
@@ -29,18 +31,24 @@ def image_search(search_term, api_key):
             response = requests.get(search_url, headers=headers, params=params)
             response.raise_for_status()
             search_results = response.json()
+            totalEstimatedMatches = search_results["totalEstimatedMatches"]
+            if not totalEstimatedMatches or totalEstimatedMatches == float("inf"):
+                raise RuntimeError("totalEstimatedMatches should not be infinite")
             with open(f"{search_term}_{offset}.json", 'w') as json_file:
                 json.dump(search_results, json_file)
         except Exception as err:
             print(err)
             exit()
         sleep(1)
+        offset += 150
+        n_searches = min(150, abs(totalEstimatedMatches - offset))
+        
 
 # thumbnail_urls = [img["thumbnailUrl"] for img in search_results["value"][:16]]
 
 def download_image(search_term):
     os.makedirs(search_term, exist_ok=True)
-    for offset in range(0, MAX_IMAGES, IMAGES_PER_REQUEST):
+    for offset in range(0, 300+1, 150):
         with open(f"{search_term}_{offset}.json") as json_file:
             data = json.load(json_file)
             for i, image_data in enumerate(data["value"]):
@@ -70,8 +78,9 @@ def main():
     if not api_key:
         raise(RuntimeError("API KEY Not found!"))
 
-    # image_search("Spaghetti", api_key)
-    download_image("Spaghetti")
+    # image_search("Fettuccine noodles", api_key)
+    download_image("Fettuccine_noodles")
+
 if __name__ == "__main__":
     main()
 # 1. Spaghetti

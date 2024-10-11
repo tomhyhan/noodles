@@ -25,7 +25,7 @@ def find_duplicates(image_dir):
     # return {h: paths for h, paths in hashes.items() if len(paths) > 1}
 
 # Usage
-duplicates = find_duplicates('./Spaghetti')
+duplicates = find_duplicates('./Fettuccine')
 # for hash, filepaths in duplicates.items():
 #     print(f"Duplicate images (hash: {hash}):")
 #     for path in filepaths:
