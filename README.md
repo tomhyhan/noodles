@@ -1,4 +1,4 @@
-# classification Model for pasta noodles 
+# Image classification Model for pasta noodles 
 
 ## The Model classifies the following categories
 1. Spaghetti
