@@ -5,18 +5,21 @@ from duplicate import find_duplicates
 
 # 1. Spaghetti v
 # 2. Fettuccine v
-# 3. Penne 
-# 4. Rigatoni - 
-# 5. Macaroni
-# 6. Fusilli
+# 3. Penne v
+# 4. Rigatoni v
+# 5. Macaroni v
+# 6. Linguine o
 # 7. Farfalle
-# 8. Couscous
-# 9. Fregola
+# 8. Tagliatelle
+# 9. Fusilli
 # 10. Orzo
 # 11. Conchiglie
 # 12. Bucatini
-# 13. Gemelli
-
+# 13. Orecchiette
+# 14. Ravioli
+# 15. Tortellini
+# 16. Gemelli
+# 17. Fregola
 def main():
     env = dotenv.dotenv_values()
     api_key = env.get("API_KEY")
@@ -24,7 +27,8 @@ def main():
     if not api_key:
         raise(RuntimeError("API KEY Not found!"))
 
-    pasta_list = ["Penne" , "Rigatoni" , "Macaroni", "Fusilli", "Farfalle", "Couscous", "Fregola", "Orzo", "Conchiglie", "Bucatini", "Gemelli"]
+    # pasta_list = ["Penne" , "Rigatoni" , "Macaroni", "Fusilli", "Farfalle", "Couscous", "Fregola", "Orzo", "Conchiglie", "Bucatini", "Gemelli"]
+    pasta_list = ["Linguine" , "Tagliatelle" , "Orecchiette", "Ravioli", "Tortellini"]
 
     for pasta in pasta_list:
         first_offset= image_search(pasta, api_key)
