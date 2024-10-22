@@ -9,17 +9,17 @@ from duplicate import find_duplicates
 # 4. Rigatoni v
 # 5. Macaroni v
 # 6. Linguine o
-# 7. Farfalle
-# 8. Tagliatelle
-# 9. Fusilli
-# 10. Orzo
-# 11. Conchiglie
-# 12. Bucatini
-# 13. Orecchiette
-# 14. Ravioli
-# 15. Tortellini
-# 16. Gemelli
-# 17. Fregola
+# 7. Farfalle x
+# 8. Tagliatelle x
+# 9. Fusilli x
+# 10. Orzo x
+# 11. Conchiglie x
+# 12. Bucatini t
+# 13. Orecchiette t
+# 14. Ravioli t
+# 15. Tortellini t
+# 16. Fregola
+
 def main():
     env = dotenv.dotenv_values()
     api_key = env.get("API_KEY")
