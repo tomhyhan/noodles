@@ -20,10 +20,10 @@
 
 ## Process
 
-1. Create dataframe for images and label
-2. Save dataframe into CSV file [image_file_path, label]
-3. Load dataframe and split the data into train/test 
-4. Seperatly calculate the mean and std for train_set
+1. Create dataframe for images and label <span style="color:green;">✔</span>
+2. Save dataframe into CSV file [image_file_path, label] <span style="color:green;">✔</span>
+3. Load dataframe and split the data into train/test <span style="color:green;">✔</span>
+4. Seperatly calculate the mean and std for train_set <span style="color:green;">✔</span>
 5. Further split train set into train/val
 6. Define Tranform for the image
 7. Create Custom Dataset that takes int Dataframe and Transform
@@ -34,3 +34,7 @@
     - MaxVIT
     - RegNet
     - Efficient Net
+
+# Optional
+    1. Organize structure
+    2. create config file

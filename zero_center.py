@@ -1,50 +1,32 @@
-import numpy as np
-from PIL import Image
+import cv2
+import pandas as pd
+from sklearn.model_selection import train_test_split
 import torch
-from torchvision import transforms
-from torch.utils.data import Dataset
 
-class ImageDataset(Dataset):
-    def __init__(self, image_paths, transform=None):
-        self.image_paths = image_paths
-        self.transform = transform
-        
-        # Calculate dataset statistics BEFORE transforms
-        means = []
-        stds = []
-        
-        for path in image_paths:
-            img = np.array(Image.open(path)).astype(np.float32)
-            # Convert to channel-first format (C, H, W)
-            img = img.transpose(2, 0, 1)
-            # Calculate statistics per channel
-            means.append(img.mean(axis=(1, 2)))
-            stds.append(img.std(axis=(1, 2)))
-            
-        # Average across all images
-        self.means = np.mean(means, axis=0)  # [channel1_mean, channel2_mean, channel3_mean]
-        self.stds = np.mean(stds, axis=0)    # [channel1_std, channel2_std, channel3_std]
-        
-        # Create normalization transform
-        self.normalize = transforms.Normalize(mean=self.means, std=self.stds)
-        
-    def __getitem__(self, idx):
-        image = Image.open(self.image_paths[idx])
-        
-        if self.transform:
-            image = self.transform(image)
-            
-        # Apply normalization after other transforms
-        image = self.normalize(image)
-        return image
+SEED = 42
 
-# Example usage
-transform = transforms.Compose([
-    transforms.Resize((224, 224)),
-    transforms.ToTensor(),  # Scales pixels to [0,1]
-])
+data = pd.read_csv("./pasta_data.csv")
+image_paths, labels = data["img_path"], data["label"]
 
-dataset = ImageDataset(
-    image_paths=['path/to/images'],
-    transform=transform
-)
+X, test_data, y, test_label = train_test_split(image_paths, labels, train_size=0.9, random_state=SEED, shuffle=True, stratify=labels)
+
+means = []
+stds = []
+for path in image_paths:
+    image = cv2.imread(path)
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+    img = torch.tensor(image, dtype=torch.float32).div(255)
+    img = img.permute(2, 0, 1)
+    means.append(img.mean(dim=(1, 2)))
+    stds.append(img.std(dim=(1, 2)))
+
+means = torch.stack(means)
+stds = torch.stack(stds)
+
+mean = means.mean(dim=0)
+std = stds.mean(dim=0)
+
+print(mean, std)
+# Train Data (RGB)
+# mean - tensor([0.6614, 0.5616, 0.4240]) 
+# std  - tensor([0.2281, 0.2389, 0.2696])
