@@ -8,7 +8,7 @@ SEED = 42
 data = pd.read_csv("./pasta_data.csv")
 image_paths, labels = data["img_path"], data["label"]
 
-X, test_data, y, test_label = train_test_split(image_paths, labels, train_size=0.9, random_state=SEED, shuffle=True, stratify=labels)
+X, test_data, y, test_label = train_test_split(image_paths.values, labels.values, train_size=0.9, random_state=SEED, shuffle=True, stratify=labels)
 
 means = []
 stds = []

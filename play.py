@@ -1,105 +1,78 @@
 import albumentations  as A
-import cv2
+from albumentations.pytorch import ToTensorV2 
 from torch.utils.data import DataLoader, Dataset
-import numpy
+import numpy as np
 import matplotlib.pyplot as plt
+from model.data_model import PastaData
+from sklearn.model_selection import train_test_split
+import pandas as pd
 
-transform = A.Compose([
-    A.RandomCrop(width=256, height=256),
-    A.HorizontalFlip(p=0.5),
-    A.RandomBrightnessContrast(p=0.2),
-    # A.CenterCrop(224,224),
-    # A.Resize(224,244)
-])
+SEED = 42
 
-class SingleDataset(Dataset):
-    def __init__(self, image_path, transform=None):
-        self.image = cv2.imread(image_path)
-        self.image = cv2.cvtColor(self.image, cv2.COLOR_BGR2RGB)
-        self.transform = transform  
-              
-    def __len__(self):
-        return 1
-    
-    def __getitem__(self, idx):
-        if self.transform:
-            print("transform")
-            return self.transform(image=self.image)["image"]
-        print("asdf")
-img = SingleDataset("./Penne_2.jpg", transform=transform)
+def create_transforms(image_size=224):
+    # calculated seperately
+    mean = [0.6614, 0.5616, 0.4240]
+    std  = [0.2281, 0.2389, 0.2696]
 
-loader = DataLoader(img, batch_size=1, shuffle=False)
+    transform_list = [
+        # Transform 1: Basic resize and normalize
+        A.Compose([
+            A.Resize(image_size, image_size),
+            A.Normalize(mean=mean, std=std),
+           ToTensorV2()
+        ]),
+        
+        # Transform 2: Center crop
+        A.Compose([
+            A.Resize(int(image_size * 1.2), int(image_size * 1.2)),
+            A.CenterCrop(image_size, image_size),
+            A.Normalize(mean=mean, std=std),
+            ToTensorV2()
+        ]),
+        
+        # Transform 3: Random crop with color augmentation
+        A.Compose([
+            A.RandomResizedCrop(image_size, image_size),
+            A.HorizontalFlip(p=0.5),
+            A.RandomBrightnessContrast(p=0.2),
+            A.Normalize(mean=mean, std=std),
+            ToTensorV2()
+        ]),
+        
+        # Transform 4: Strong augmentation
+        # A.Compose([
+        #     A.RandomResizedCrop(image_size, image_size),
+        #     A.HorizontalFlip(p=0.5),
+        #     A.OneOf([
+        #         A.RandomBrightnessContrast(),
+        #         A.ColorJitter(),
+        #     ], p=0.3),
+        #     A.OneOf([
+        #         A.GaussNoise(),
+        #         A.GaussianBlur(),
+        #     ], p=0.2),
+        #     A.Normalize(mean=mean, std=std),
+        #     ToTensorV2
+        # ])
+    ]
+    return transform_list
 
-for batch in loader:
-    print(len(batch))
-    augmented_image = batch[0].numpy()  # Convert to numpy array
-    
-    # Display original and augmented images side by side
-    plt.figure(figsize=(10, 5))
-    
-    plt.subplot(1, 2, 1)
-    plt.imshow(img.image)
-    plt.title('Original Image')
-    plt.axis('off')
-    
-    plt.subplot(1, 2, 2)
-    plt.imshow(augmented_image)
-    plt.title('Augmented Image')
-    plt.axis('off')
-    
-    plt.show()
-    
-# import albumentations as A
-# import cv2
-# import numpy as np
-# from torch.utils.data import Dataset, DataLoader
-# import matplotlib.pyplot as plt
+data = pd.read_csv("./pasta_data.csv")
+image_paths, labels = data["img_path"], data["label"]
 
-# # Create a custom dataset class
-# class SingleImageDataset(Dataset):
-#     def __init__(self, image_path, transform=None):
-#         self.image = cv2.imread(image_path)
-#         self.image = cv2.cvtColor(self.image, cv2.COLOR_BGR2RGB)
-#         self.transform = transform
-    
-#     def __len__(self):
-#         return 1  # Since we only have one image
-    
-#     def __getitem__(self, idx):
-#         if self.transform:
-#             augmented = self.transform(image=self.image)
-#             image = augmented['image']
-#         else:
-#             image = self.image
-#         return image
+X, test_data, y, test_label = train_test_split(image_paths.values, labels.values, train_size=0.9, random_state=SEED, shuffle=True, stratify=labels)
 
-# # Define transformations
-# transform = A.Compose([
-#     A.RandomCrop(width=256, height=256),
-#     A.HorizontalFlip(p=0.5),
-#     A.RandomBrightnessContrast(p=0.2),
-# ])
+N=50
+perm_indices = np.random.permutation(N)
 
-# # Create dataset and dataloader
-# dataset = SingleImageDataset("./Penne_0.jpg", transform=transform)
-# dataloader = DataLoader(dataset, batch_size=1, shuffle=False)
+X = X[perm_indices]
+y = y[perm_indices]
 
-# # Get and display the augmented image
-# for batch in dataloader:
-#     augmented_image = batch[0].numpy()  # Convert to numpy array
-    
-#     # Display original and augmented images side by side
-#     plt.figure(figsize=(10, 5))
-    
-#     plt.subplot(1, 2, 1)
-#     plt.imshow(dataset.image)
-#     plt.title('Original Image')
-#     plt.axis('off')
-    
-#     plt.subplot(1, 2, 2)
-#     plt.imshow(augmented_image)
-#     plt.title('Augmented Image')
-#     plt.axis('off')
-    
-#     plt.show()
-#     break  # Since we only want to show one augmented version
+
+transform_list = create_transforms()
+img = PastaData(image_paths=X, labels=y, transform_list=transform_list)
+
+print(len(img))
+
+loader = DataLoader(img, batch_size=32, shuffle=False, drop_last=True)
+print(len(loader))

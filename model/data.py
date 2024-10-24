@@ -1,10 +1,13 @@
 import os
 import json
-from time import sleep
-
+import imagehash
 import requests
+import pandas as pd
+from time import sleep
+from PIL import Image
 from io import BytesIO
 from PIL import Image
+
 
 def image_search(search_term, api_key):
     search_url = "https://api.bing.microsoft.com/v7.0/images/search"
@@ -14,9 +17,7 @@ def image_search(search_term, api_key):
     totalEstimatedMatches = float('inf')
     offset = 0
     n_searches = 150
-    # data["totalEstimatedMatches"]
     while offset + n_searches <= totalEstimatedMatches:
-    # for offset in range(0, MAX_IMAGES, IMAGES_PER_REQUEST):
         print(totalEstimatedMatches)
         params = {"q": search_term, 
                   "imageType": "photo", 
@@ -41,12 +42,10 @@ def image_search(search_term, api_key):
         n_searches = min(150, abs(totalEstimatedMatches - offset))
     return offset
 
-# thumbnail_urls = [img["thumbnailUrl"] for img in search_results["value"][:16]]
 
 def download_image(search_term, total_offset, option=None, extra_offset=0):
     os.makedirs(search_term, exist_ok=True)
     filename = f"{search_term} {option}" if option else search_term
-    # total_offset = total_offset if total_offset % 150 == 0 else total_offset + 1
     for offset in range(0, total_offset+1, 150):
         with open(f"{filename}_{offset}.json") as json_file:
             data = json.load(json_file)
@@ -61,18 +60,61 @@ def download_image(search_term, total_offset, option=None, extra_offset=0):
                         image_path = os.path.join(search_term, f"{search_term}_{offset+extra_offset+i}.jpg")
                         rgb_image.save(image_path, "JPEG")
                         
-                        # rgb_arr = np.array(resize_image)                
-                        # print(image_data["thumbnailUrl"])
-                        # print(rgb_arr)
-                        # print(rgb_arr.shape)
                     except Exception as e:
                         print(e)
                         print(f"Failed to process image from {thumbnailUrl}")
       
     
-def main():
-    pass
+    
+def find_duplicates(image_dir):
+    hashes = {}
+    for filename in os.listdir(image_dir):
+        if filename.endswith(('.png', '.jpg', '.jpeg')):
+            filepath = os.path.join(image_dir, filename)
+            with Image.open(filepath) as img:
+                hash = str(imagehash.average_hash(img))
+                if hash in hashes:
+                    hashes[hash].append(filepath)
+                else:
+                    hashes[hash] = [filepath]
+    
+    for paths in hashes.values():
+        if len(paths) > 1:
+            for filepath in paths[1:]:
+                try:
+                    os.remove(filepath)
+                    print(f"Deleted: {filepath}")
+                except Exception as e:
+                    print(e)
 
-if __name__ == "__main__":
-    main()
+def create_csv(image_folder_path, class_encoder):
+    classes = os.listdir(image_folder_path)
+    
+    labels = []
+    for class_ in classes:
+        class_folder = os.path.join(image_folder_path, class_)
+        if os.path.isdir(class_folder):
+            for img_name in os.listdir(class_folder):
+                img_path = os.path.join(class_folder, img_name)
+                labels.append({
+                    "img_path": img_path,
+                    "label" : class_encoder[class_]
+                })
+    dataframe = pd.DataFrame(labels)
+    dataframe = dataframe.sort_values(['label', 'img_path'])
+    dataframe = dataframe.reset_index(drop=True)
+    dataframe.to_csv("./pasta_data.csv")
 
+def download_imgs(api_key):
+    pasta_list = [
+        "Spaghetti","Fettuccine","Penne","Rigatoni","Macaroni","Linguine","Farfalle","Tagliatelle","Fusilli","Orzo","Conchiglie","Bucatini","Orecchiette","Ravioli","Tortellini","Fregola"
+    ]
+
+    for pasta in pasta_list:
+        first_offset= image_search(pasta, api_key)
+        print("first_offset", first_offset)
+        download_image(pasta, first_offset-150)
+        second_offset= image_search(f"{pasta} noodles", api_key)
+        print("second_offset", second_offset)
+        download_image(pasta, second_offset-150, option="noodles", extra_offset=450)
+        find_duplicates(pasta)
