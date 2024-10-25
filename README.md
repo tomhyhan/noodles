@@ -38,3 +38,9 @@
 # Optional
     1. Organize structure
     2. create config file
+
+# K-fold
+    - Iterate through K-fold, and find out the model that has the best accuracy
+
+# Summary
+    - use torch summary
