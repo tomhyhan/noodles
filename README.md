@@ -34,6 +34,8 @@
     - MaxVIT
     - RegNet
     - Efficient Net
+11. Find the best parameter from each k-fold model
+12. use best models to make prediction against test dataset and save the best performing parameter. (or over the average from all models)
 
 # Optional
     1. Organize structure

@@ -8,6 +8,24 @@ from PIL import Image
 from io import BytesIO
 from PIL import Image
 
+CLASS_ENCODER = {
+        "Spaghetti" : 0,
+        "Fettuccine": 1,
+        "Penne": 2,
+        "Rigatoni": 3,
+        "Macaroni": 4,
+        "Linguine": 5,
+        "Farfalle": 6,
+        "Tagliatelle": 7,
+        "Fusilli": 8,
+        "Orzo": 9,
+        "Conchiglie": 10,
+        "Bucatini": 11,
+        "Orecchiette": 12,
+        "Ravioli": 13,
+        "Tortellini": 14,
+        "Fregola": 15
+    }
 
 def image_search(search_term, api_key):
     search_url = "https://api.bing.microsoft.com/v7.0/images/search"

@@ -1,8 +1,9 @@
 import torch
 from torch import nn
 from torch import optim
-from tqdm import tqdm 
+from tqdm.auto import tqdm 
 from torch.optim.lr_scheduler import ReduceLROnPlateau
+from torchinfo import summary
 
 def trainer(
     model: nn.Module,
@@ -10,10 +11,13 @@ def trainer(
     val_batch,
     num_epochs,
     lr,
+    batch_size,
     weight_decay,
     device = "cpu"
 ):
     
+    summary(model, input_size=(batch_size, 3, 224, 224))
+
     optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
     scheduler = ReduceLROnPlateau(optimizer=optimizer, patience=3, factor=0.2, mode='max')
     
@@ -48,7 +52,7 @@ def trainer(
         
         scheduler.step(train_accuracy)
         print("Learning Rate:", scheduler.get_last_lr())
-        print(f"Epoch {epoch+1} Loss: {avg_loss} Train Accuracy: {train_accuracy}")    
+        tqdm.write(f"Epoch {epoch+1} Loss: {avg_loss} Train Accuracy: {train_accuracy}")    
     
 
 def calc_accuracy(model, batchs, device="cpu"):
