@@ -17,45 +17,7 @@ from model.viz import class_imblance
 
 SEED = 42
 
-def create_train_transforms(image_size=224):
-    # calculated seperately
-    mean = [0.6614, 0.5616, 0.4240]
-    std  = [0.2281, 0.2389, 0.2696]
 
-    transform_list = [
-        A.Compose([
-            A.Resize(image_size, image_size),
-            A.Normalize(mean=mean, std=std),
-           ToTensorV2()
-        ]),
-        
-        A.Compose([
-            A.Resize(int(image_size * 1.2), int(image_size * 1.2)),
-            A.CenterCrop(image_size, image_size),
-            A.Normalize(mean=mean, std=std),
-            ToTensorV2()
-        ]),
-        
-        A.Compose([
-            A.Resize(int(image_size * 1.2), int(image_size * 1.2)),
-            A.RandomCrop(image_size, image_size),
-            A.OneOf([
-                A.RandomBrightnessContrast(
-                    brightness_limit=0.2, 
-                    contrast_limit=0.2
-                ),
-                A.HueSaturationValue(
-                    hue_shift_limit=5, 
-                    sat_shift_limit=20,
-                    val_shift_limit=20
-                ),
-            ], p=0.7),  
-            A.GaussianBlur(blur_limit=(3, 5), p=0.3), 
-            A.Normalize(mean=mean, std=std),
-            ToTensorV2()
-        ]),
-    ]
-    return transform_list
 
 data = pd.read_csv("./pasta_data.csv")
 image_paths, labels = data["img_path"], data["label"]

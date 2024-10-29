@@ -4,6 +4,7 @@ from torch import optim
 from tqdm.auto import tqdm 
 from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torchinfo import summary
+from torchvision.models import swin_s, Swin_S_Weights
 
 def trainer(
     model: nn.Module,
@@ -12,7 +13,10 @@ def trainer(
     num_epochs,
     lr,
     batch_size,
+    k_fold_id,
     weight_decay,
+    early_stop=5,
+    log_interval=1,
     device = "cpu"
 ):
     
@@ -25,16 +29,20 @@ def trainer(
     
     model = model.to(device)
     model.train()
-    
+
+    best_accuracy = 0
+    best_model = None
+    no_improvement = 0
+
     loss_history = []
+    iterations = 0
+
     for epoch in range(num_epochs):
         losses = []
         progress_bar = tqdm(train_batch, 
                        desc=f'Epoch {epoch+1}/{num_epochs}',
                        leave=True)
         
-        train_corrects = 0
-        n_total = 0
         for batch in progress_bar:
             X, y = batch
             X = X.to(device)
@@ -45,19 +53,35 @@ def trainer(
             loss = loss_fn(pred, y)
             
             losses.append(loss.item())
-            n_total += X.size(0)
             
             loss.backward()
             optimizer.step()   
         
         train_accuracy = calc_accuracy(model, train_batch, device=device)
+        val_accuracy = calc_accuracy(model, val_batch, device=device)
         avg_loss = sum(losses) // len(losses)
         
-        scheduler.step(train_accuracy)
+        scheduler.step(val_accuracy)
 
-        print("Learning Rate:", scheduler.get_last_lr())
-        tqdm.write(f"Epoch {epoch+1} Loss: {avg_loss} Train Accuracy: {train_accuracy}")    
-    
+        if epoch % log_interval == 0: 
+            print("Learning Rate:", scheduler.get_last_lr())
+            print(f"Epoch {epoch+1} Loss: {avg_loss} Train Accuracy: {train_accuracy}")    
+
+        if val_accuracy > best_accuracy:
+            best_accuracy = best_accuracy
+            best_model = model.
+        else:
+            no_improvement += 1
+
+        if no_improvement == early_stop:
+            break
+    return loss_history, train_accuracy, val_accuracy, best_accuracy
+
+def create_model(model_name, num_classes):
+    if model_name == "swin":
+        model = swin_s(weights=Swin_S_Weights.IMAGENET1K_V1)
+        model.head = nn.Linear(model.head.in_features, num_classes)
+    return model
 
 def calc_accuracy(model, batchs, device="cpu"):
     model.eval()
