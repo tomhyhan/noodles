@@ -3,7 +3,7 @@ import numpy as np
 import torch
 
 def test_colab():
-    print("Hello Colab! from Noodles")
+    print("Hello Colab! from Noodles ha")
 
 def reset_seed(seed):
     random.seed(seed)
