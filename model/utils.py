@@ -2,6 +2,9 @@ import random
 import numpy as np
 import torch
 
+def test_colab():
+    print("Hello Colab! from Noodles")
+
 def reset_seed(seed):
     random.seed(seed)
     np.random.seed(seed)
