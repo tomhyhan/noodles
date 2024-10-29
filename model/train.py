@@ -33,6 +33,8 @@ def trainer(
                        desc=f'Epoch {epoch+1}/{num_epochs}',
                        leave=True)
         
+        train_corrects = 0
+        n_total = 0
         for batch in progress_bar:
             X, y = batch
             X = X.to(device)
@@ -43,6 +45,7 @@ def trainer(
             loss = loss_fn(pred, y)
             
             losses.append(loss.item())
+            n_total += X.size(0)
             
             loss.backward()
             optimizer.step()   
@@ -51,6 +54,7 @@ def trainer(
         avg_loss = sum(losses) // len(losses)
         
         scheduler.step(train_accuracy)
+
         print("Learning Rate:", scheduler.get_last_lr())
         tqdm.write(f"Epoch {epoch+1} Loss: {avg_loss} Train Accuracy: {train_accuracy}")    
     

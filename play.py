@@ -64,12 +64,8 @@ X, test_data, y, test_label = train_test_split(image_paths.values, labels.values
 
 # class_imblance(y)
 
-# StratifiedKFold
-k_fold = StratifiedKFold(n_splits=10, random_state=42, shuffle=True)
-for (train_i, val_i) in k_fold.split(X,y):
-    print(len(train_i), len(val_i))
-print(type(X), type(y))
 
+print(type(X), type(y))
 
 N=20
 perm_indices = np.random.permutation(N)
@@ -96,13 +92,16 @@ model.head = nn.Linear(model.head.in_features, 16)
 
 print(len(loader))
 
-
-# trainer(
-#     model, 
-#     loader, 
-#     None,
-#     num_epochs=num_epochs,
-#     lr=lr,
-#     batch_size=batch_size,
-#     weight_decay=0.01,
-# )
+# StratifiedKFold
+k_fold = StratifiedKFold(n_splits=10, random_state=42, shuffle=True)
+for (train_i, val_i) in k_fold.split(X,y):
+    print(len(train_i), len(val_i))
+    trainer(
+        model, 
+        loader, 
+        None,
+        num_epochs=num_epochs,
+        lr=lr,
+        batch_size=batch_size,
+        weight_decay=0.01,
+    )
