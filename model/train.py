@@ -13,7 +13,6 @@ def trainer(
     num_epochs,
     lr,
     batch_size,
-    k_fold_id,
     weight_decay,
     early_stop=5,
     log_interval=1,
@@ -31,18 +30,19 @@ def trainer(
     model.train()
 
     best_accuracy = 0
-    best_model = None
-    no_improvement = 0
+    best_params = None
+    stop_increasing = 0
 
     loss_history = []
-    iterations = 0
+    train_accuracy_history = []
+    val_accuracy_history = []
 
     for epoch in range(num_epochs):
-        losses = []
+        model.train()
         progress_bar = tqdm(train_batch, 
                        desc=f'Epoch {epoch+1}/{num_epochs}',
                        leave=True)
-        
+        current_losses = []
         for batch in progress_bar:
             X, y = batch
             X = X.to(device)
@@ -52,30 +52,40 @@ def trainer(
             pred = model(X)
             loss = loss_fn(pred, y)
             
-            losses.append(loss.item())
-            
+            loss_history.append(loss.item())
+            current_losses.append(loss.item())
+
             loss.backward()
             optimizer.step()   
-        
+            current_iteration += 1
+
         train_accuracy = calc_accuracy(model, train_batch, device=device)
         val_accuracy = calc_accuracy(model, val_batch, device=device)
-        avg_loss = sum(losses) // len(losses)
         
+        train_accuracy_history.append(train_accuracy)
+        val_accuracy_history.append(val_accuracy)
+        avg_loss = sum(current_losses) / len(current_losses)
+
         scheduler.step(val_accuracy)
+        iterations += current_iteration
 
         if epoch % log_interval == 0: 
             print("Learning Rate:", scheduler.get_last_lr())
             print(f"Epoch {epoch+1} Loss: {avg_loss} Train Accuracy: {train_accuracy}")    
 
         if val_accuracy > best_accuracy:
-            best_accuracy = best_accuracy
-            best_model = model.
+            best_accuracy = val_accuracy
+            best_params = model.state_dict()
+            stop_increasing = 0
         else:
-            no_improvement += 1
+            stop_increasing += 1
 
-        if no_improvement == early_stop:
+        if stop_increasing == early_stop:
+            print("Train Early Stop...")
             break
-    return loss_history, train_accuracy, val_accuracy, best_accuracy
+
+    return loss_history, train_accuracy_history, 
+    val_accuracy_history, best_accuracy, best_params
 
 def create_model(model_name, num_classes):
     if model_name == "swin":
@@ -88,14 +98,14 @@ def calc_accuracy(model, batchs, device="cpu"):
     
     corrects = 0
     total = 0
-    
-    for batch in batchs:
-        X, y = batch
-        X = X.to(device)
-        y = y.to(device)
-        
-        pred = model(X)
-        corrects += pred.argmax(dim=1).eq(y).sum().item()
-        total += len(y)
+    with torch.no_grad():
+        for batch in batchs:
+            X, y = batch
+            X = X.to(device)
+            y = y.to(device)
+            
+            pred = model(X)
+            corrects += pred.argmax(dim=1).eq(y).sum().item()
+            total += len(y)
         
     return corrects / total

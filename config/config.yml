@@ -15,6 +15,7 @@ swin:
     max_betas: 0.999
     warmup_epochs: 20
     warmup_start_lr: 0.000001
+    output_dir: './swin'
 maxvit:
   model_name: 'maxvit_t'
   train_args:
@@ -25,4 +26,5 @@ maxvit:
     max_betas: 0.999
     warmup_epochs: 32
     warmup_start_lr: 0.000001
+    output_dir: './maxvit'
 
