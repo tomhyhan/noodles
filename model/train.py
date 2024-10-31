@@ -5,7 +5,7 @@ from torch import optim
 from tqdm.auto import tqdm 
 from torch.optim.lr_scheduler import ReduceLROnPlateau, OneCycleLR
 from torchinfo import summary
-from torchvision.models import swin_s, Swin_S_Weights
+from torchvision.models import swin_s, Swin_S_Weights, maxvit_t, MaxVit_T_Weights
 from torch.amp import GradScaler
 
 def trainer(
@@ -114,6 +114,14 @@ def create_model(model_name, num_classes):
     if model_name == "swin":
         model = swin_s(weights=Swin_S_Weights.IMAGENET1K_V1)
         model.head = nn.Linear(model.head.in_features, num_classes)
+    elif model_name == "maxvit":
+        model = maxvit_t(weights=MaxVit_T_Weights.IMAGENET1K_V1)
+        in_features = model.classifier[-1].in_features
+        
+        model.classifier[-1] = nn.Linear(
+            in_features=in_features,
+            out_features=num_classes
+        )
     return model
 
 def create_scheduler(scheduler_name, optimizer, lr, num_epochs, n_train_batch):

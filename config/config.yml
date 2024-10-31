@@ -2,13 +2,13 @@ seed: 42
 data_path: "./pasta_data.csv"
 image_size: 224
 n_splits: 5
-num_epochs: 5
+num_epochs: 3
 lr: 0.0001
 num_classes: 16
 swin:
   model_name: 'swin_s'
   train_args:
-    batch_size: 16
+    batch_size: 64
     weight_decay: 0.05
     log_interval: 1
     min_batas: 0.9
@@ -20,8 +20,8 @@ swin:
 maxvit:
   model_name: 'maxvit_t'
   train_args:
-    batch_size: 128
-    weight_decay: 0.01
+    batch_size: 64
+    weight_decay: 0.001
     log_interval: 1
     min_batas: 0.9
     max_betas: 0.999
