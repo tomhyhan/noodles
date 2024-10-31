@@ -1,8 +1,9 @@
+import copy
 import torch
 from torch import nn
 from torch import optim
 from tqdm.auto import tqdm 
-from torch.optim.lr_scheduler import ReduceLROnPlateau
+from torch.optim.lr_scheduler import ReduceLROnPlateau, OneCycleLR
 from torchinfo import summary
 from torchvision.models import swin_s, Swin_S_Weights
 
@@ -16,13 +17,14 @@ def trainer(
     weight_decay,
     early_stop=5,
     log_interval=1,
+    scheduler_name="ReduceLROnPlateau",
     device = "cpu"
 ):
     
     summary(model, input_size=(batch_size, 3, 224, 224))
 
     optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
-    scheduler = ReduceLROnPlateau(optimizer=optimizer, patience=3, factor=0.2, mode='max')
+    scheduler = create_scheduler(scheduler_name, optimizer, lr, num_epochs, len(train_batch))
     
     loss_fn = nn.CrossEntropyLoss()
     
@@ -56,7 +58,10 @@ def trainer(
             current_losses.append(loss.item())
 
             loss.backward()
-            optimizer.step()   
+            optimizer.step()  
+
+            if scheduler_name == "OneCycleLR":
+                scheduler.step()
 
         train_accuracy = calc_accuracy(model, train_batch, device=device)
         val_accuracy = calc_accuracy(model, val_batch, device=device)
@@ -65,7 +70,8 @@ def trainer(
         val_accuracy_history.append(val_accuracy)
         avg_loss = sum(current_losses) / len(current_losses)
 
-        scheduler.step(val_accuracy)
+        if scheduler_name == "ReduceLROnPlateau":
+            scheduler.step(val_accuracy)
 
         if epoch % log_interval == 0: 
             print("Learning Rate:", scheduler.get_last_lr())
@@ -74,7 +80,7 @@ def trainer(
 
         if val_accuracy > best_accuracy:
             best_accuracy = val_accuracy
-            best_params = model.state_dict()
+            best_params = copy.deepcopy(model.state_dict())
             stop_increasing = 0
         else:
             stop_increasing += 1
@@ -82,7 +88,10 @@ def trainer(
         if stop_increasing == early_stop:
             print("Train Early Stop...")
             break
-
+    
+    # if best_params is not None:
+    #     model.load_state_dict(best_params)
+    
     return loss_history, train_accuracy_history, \
     val_accuracy_history, best_accuracy, best_params
 
@@ -91,6 +100,21 @@ def create_model(model_name, num_classes):
         model = swin_s(weights=Swin_S_Weights.IMAGENET1K_V1)
         model.head = nn.Linear(model.head.in_features, num_classes)
     return model
+
+def create_scheduler(scheduler_name, optimizer, lr, num_epochs, n_train_batch):
+    if scheduler_name == "ReduceLROnPlateau":
+        scheduler = ReduceLROnPlateau(optimizer=optimizer, patience=3, factor=0.2, mode='max')
+    elif scheduler_name == "OneCycleLR":
+        scheduler = torch.optim.lr_scheduler.OneCycleLR(
+        optimizer,
+        max_lr=lr,
+        epochs=num_epochs,
+        steps_per_epoch=n_train_batch,
+        pct_start=0.3,
+        div_factor=25,
+        final_div_factor=1e4
+    )
+    return scheduler
 
 def calc_accuracy(model, batchs, device="cpu"):
     model.eval()
