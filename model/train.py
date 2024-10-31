@@ -57,7 +57,6 @@ def trainer(
 
             loss.backward()
             optimizer.step()   
-            current_iteration += 1
 
         train_accuracy = calc_accuracy(model, train_batch, device=device)
         val_accuracy = calc_accuracy(model, val_batch, device=device)
@@ -67,11 +66,11 @@ def trainer(
         avg_loss = sum(current_losses) / len(current_losses)
 
         scheduler.step(val_accuracy)
-        iterations += current_iteration
 
         if epoch % log_interval == 0: 
             print("Learning Rate:", scheduler.get_last_lr())
-            print(f"Epoch {epoch+1} Loss: {avg_loss} Train Accuracy: {train_accuracy}")    
+            print(f"Epoch {epoch+1} Loss: {avg_loss} Train Accuracy: {train_accuracy} \
+            Validation Accuracy: {val_accuracy}")    
 
         if val_accuracy > best_accuracy:
             best_accuracy = val_accuracy
@@ -84,7 +83,7 @@ def trainer(
             print("Train Early Stop...")
             break
 
-    return loss_history, train_accuracy_history, 
+    return loss_history, train_accuracy_history, \
     val_accuracy_history, best_accuracy, best_params
 
 def create_model(model_name, num_classes):
@@ -103,9 +102,9 @@ def calc_accuracy(model, batchs, device="cpu"):
             X, y = batch
             X = X.to(device)
             y = y.to(device)
-            
+
             pred = model(X)
             corrects += pred.argmax(dim=1).eq(y).sum().item()
             total += len(y)
-        
+
     return corrects / total

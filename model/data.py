@@ -105,9 +105,9 @@ def find_duplicates(image_dir):
                 except Exception as e:
                     print(e)
 
-def create_csv(image_folder_path, class_encoder):
+def create_csv(image_folder_path, csv_file_path):
     classes = os.listdir(image_folder_path)
-    
+    print("classes", classes)
     labels = []
     for class_ in classes:
         class_folder = os.path.join(image_folder_path, class_)
@@ -116,12 +116,12 @@ def create_csv(image_folder_path, class_encoder):
                 img_path = os.path.join(class_folder, img_name)
                 labels.append({
                     "img_path": img_path,
-                    "label" : class_encoder[class_]
+                    "label" : CLASS_ENCODER[class_]
                 })
     dataframe = pd.DataFrame(labels)
     dataframe = dataframe.sort_values(['label', 'img_path'])
     dataframe = dataframe.reset_index(drop=True)
-    dataframe.to_csv("./pasta_data.csv")
+    dataframe.to_csv(csv_file_path)
 
 def download_imgs(api_key):
     pasta_list = [
