@@ -8,7 +8,7 @@ num_classes: 16
 swin:
   model_name: 'swin_s'
   train_args:
-    batch_size: 64
+    batch_size: 16
     weight_decay: 0.05
     log_interval: 1
     min_batas: 0.9

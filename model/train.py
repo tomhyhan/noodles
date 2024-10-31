@@ -6,6 +6,7 @@ from tqdm.auto import tqdm
 from torch.optim.lr_scheduler import ReduceLROnPlateau, OneCycleLR
 from torchinfo import summary
 from torchvision.models import swin_s, Swin_S_Weights
+from torch.amp import GradScaler
 
 def trainer(
     model: nn.Module,
@@ -18,9 +19,10 @@ def trainer(
     early_stop=5,
     log_interval=1,
     scheduler_name="ReduceLROnPlateau",
-    device = "cpu"
+    device = "cuda"
 ):
-    
+    scaler = GradScaler('cuda')
+
     summary(model, input_size=(batch_size, 3, 224, 224))
 
     optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
@@ -50,15 +52,20 @@ def trainer(
             X = X.to(device)
             y = y.to(device)
             
-            optimizer.zero_grad()
-            pred = model(X)
-            loss = loss_fn(pred, y)
-            
-            loss_history.append(loss.item())
-            current_losses.append(loss.item())
+            with torch.autocast(device_type=device):
+                optimizer.zero_grad()
+                pred = model(X)
+                loss = loss_fn(pred, y)
+                
+                loss_history.append(loss.item())
+                current_losses.append(loss.item())
 
-            loss.backward()
-            optimizer.step()  
+            scaler.scale(loss).backward()
+
+            # torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=5)
+
+            scaler.step(optimizer)
+            scaler.update()  
 
             if scheduler_name == "OneCycleLR":
                 scheduler.step()
@@ -77,6 +84,14 @@ def trainer(
             print("Learning Rate:", scheduler.get_last_lr())
             print(f"Epoch {epoch+1} Loss: {avg_loss} Train Accuracy: {train_accuracy} \
             Validation Accuracy: {val_accuracy}")    
+
+        total_norm = 0
+        for p in model.parameters():
+            if p.grad is not None:
+                param_norm = p.grad.data.norm(2)
+                total_norm += param_norm.item() ** 2
+        total_norm = total_norm ** 0.5
+        print(f'Global gradient norm: {total_norm}')
 
         if val_accuracy > best_accuracy:
             best_accuracy = val_accuracy
