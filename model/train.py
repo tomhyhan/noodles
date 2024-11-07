@@ -7,26 +7,27 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau, OneCycleLR
 from torchinfo import summary
 from torchvision.models import swin_s, Swin_S_Weights, maxvit_t, MaxVit_T_Weights
 from torch.amp import GradScaler
+from timm.data import 
+
+from .utils import load_model 
 
 def trainer(
     model: nn.Module,
     train_batch,
     val_batch,
     num_epochs,
-    lr,
-    batch_size,
-    weight_decay,
+    model_config,
+    device = "cuda",
     early_stop=5,
-    log_interval=1,
-    scheduler_name="ReduceLROnPlateau",
-    device = "cuda"
+    resume=False,
+    out_file=None,
 ):
-    scaler = GradScaler('cuda')
+    loss_scaler = GradScaler('cuda')
 
-    summary(model, input_size=(batch_size, 3, 224, 224))
+    summary(model, input_size=(model_config.batch_size, 3, 224, 224))
 
-    optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=weight_decay)
-    scheduler = create_scheduler(scheduler_name, optimizer, lr, num_epochs, len(train_batch))
+    optimizer = optim.AdamW(model.parameters(), lr=model_config.lr, weight_decay=model_config.weight_decay)
+    scheduler = create_scheduler(model_config.scheduler_name, optimizer, model_config.lr, num_epochs, len(train_batch))
     
     loss_fn = nn.CrossEntropyLoss()
     
@@ -34,14 +35,18 @@ def trainer(
     model.train()
 
     best_accuracy = 0
-    best_params = None
     stop_increasing = 0
 
     loss_history = []
     train_accuracy_history = []
     val_accuracy_history = []
 
-    for epoch in range(num_epochs):
+    start_epoch = 0
+    if resume:
+        print("Resume Training from previous check point")
+        start_epoch = load_model(model, optimizer, loss_scaler, epoch, out_file)
+
+    for epoch in range(start_epoch, start_epoch + num_epochs):
         model.train()
         progress_bar = tqdm(train_batch, 
                        desc=f'Epoch {epoch+1}/{num_epochs}',
@@ -60,14 +65,14 @@ def trainer(
                 loss_history.append(loss.item())
                 current_losses.append(loss.item())
 
-            scaler.scale(loss).backward()
+            loss_scaler.scale(loss).backward()
 
             # torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=5)
 
-            scaler.step(optimizer)
-            scaler.update()  
+            loss_scaler.step(optimizer)
+            loss_scaler.update()  
 
-            if scheduler_name == "OneCycleLR":
+            if model_config.scheduler_name == "OneCycleLR":
                 scheduler.step()
 
         train_accuracy = calc_accuracy(model, train_batch, device=device)
@@ -77,10 +82,10 @@ def trainer(
         val_accuracy_history.append(val_accuracy)
         avg_loss = sum(current_losses) / len(current_losses)
 
-        if scheduler_name == "ReduceLROnPlateau":
+        if model_config.scheduler_name == "ReduceLROnPlateau":
             scheduler.step(val_accuracy)
 
-        if epoch % log_interval == 0: 
+        if epoch % model_config.log_interval == 0: 
             print("Learning Rate:", scheduler.get_last_lr())
             print(f"Epoch {epoch+1} Loss: {avg_loss} Train Accuracy: {train_accuracy} \
             Validation Accuracy: {val_accuracy}")    
@@ -95,7 +100,6 @@ def trainer(
 
         if val_accuracy > best_accuracy:
             best_accuracy = val_accuracy
-            best_params = copy.deepcopy(model.state_dict())
             stop_increasing = 0
         else:
             stop_increasing += 1
@@ -108,7 +112,7 @@ def trainer(
     #     model.load_state_dict(best_params)
     
     return loss_history, train_accuracy_history, \
-    val_accuracy_history, best_accuracy, best_params
+    val_accuracy_history, best_accuracy, model, optimizer, scaler
 
 def create_model(model_name, num_classes):
     if model_name == "swin":
