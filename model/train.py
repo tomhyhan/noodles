@@ -122,7 +122,7 @@ def trainer(
     #     model.load_state_dict(best_params)
     
     return loss_history, train_accuracy_history, \
-    val_accuracy_history, best_accuracy, model, optimizer, loss_scaler
+    val_accuracy_history, best_accuracy, model, optimizer, loss_scaler, start_epoch + num_epochs - 1
 
 def create_model(model_name, num_classes):
     if model_name == "swin":
