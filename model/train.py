@@ -7,7 +7,8 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau, OneCycleLR
 from torchinfo import summary
 from torchvision.models import swin_s, Swin_S_Weights, maxvit_t, MaxVit_T_Weights
 from torch.amp import GradScaler
-from timm.data import 
+from timm.data.mixup import Mixup
+from timm.loss import LabelSmoothingCrossEntropy, SoftTargetCrossEntropy
 
 from .utils import load_model 
 
@@ -16,21 +17,29 @@ def trainer(
     train_batch,
     val_batch,
     num_epochs,
+    lr,
     model_config,
     device = "cuda",
     early_stop=5,
     resume=False,
     out_file=None,
+    num_classes=16
 ):
     loss_scaler = GradScaler('cuda')
 
     summary(model, input_size=(model_config.batch_size, 3, 224, 224))
 
-    optimizer = optim.AdamW(model.parameters(), lr=model_config.lr, weight_decay=model_config.weight_decay)
-    scheduler = create_scheduler(model_config.scheduler_name, optimizer, model_config.lr, num_epochs, len(train_batch))
+    optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=model_config.weight_decay)
+    scheduler = create_scheduler(model_config.scheduler, optimizer, lr, num_epochs, len(train_batch))
     
-    loss_fn = nn.CrossEntropyLoss()
+    # loss_fn = nn.CrossEntropyLoss()
+    loss_fn = SoftTargetCrossEntropy()
     
+    mixup_fn = Mixup(
+            mixup_alpha=model_config.mixup, cutmix_alpha=model_config.cutmix, cutmix_minmax=None,
+            prob=1.0, switch_prob=0.5, mode='batch',
+            label_smoothing=0.1, num_classes=num_classes)
+
     model = model.to(device)
     model.train()
 
@@ -56,7 +65,8 @@ def trainer(
             X, y = batch
             X = X.to(device)
             y = y.to(device)
-            
+            X, y = mixup_fn(X, y)
+            # --mixup 0.8 --cutmix 1.0
             with torch.autocast(device_type=device):
                 optimizer.zero_grad()
                 pred = model(X)
@@ -72,7 +82,7 @@ def trainer(
             loss_scaler.step(optimizer)
             loss_scaler.update()  
 
-            if model_config.scheduler_name == "OneCycleLR":
+            if model_config.scheduler == "OneCycleLR":
                 scheduler.step()
 
         train_accuracy = calc_accuracy(model, train_batch, device=device)
@@ -82,7 +92,7 @@ def trainer(
         val_accuracy_history.append(val_accuracy)
         avg_loss = sum(current_losses) / len(current_losses)
 
-        if model_config.scheduler_name == "ReduceLROnPlateau":
+        if model_config.scheduler == "ReduceLROnPlateau":
             scheduler.step(val_accuracy)
 
         if epoch % model_config.log_interval == 0: 
@@ -112,7 +122,7 @@ def trainer(
     #     model.load_state_dict(best_params)
     
     return loss_history, train_accuracy_history, \
-    val_accuracy_history, best_accuracy, model, optimizer, scaler
+    val_accuracy_history, best_accuracy, model, optimizer, loss_scaler
 
 def create_model(model_name, num_classes):
     if model_name == "swin":
