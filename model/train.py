@@ -53,7 +53,7 @@ def trainer(
     start_epoch = 0
     if resume:
         print("Resume Training from previous check point")
-        start_epoch = load_model(model, optimizer, loss_scaler, epoch, out_file)
+        start_epoch = load_model(model, optimizer, loss_scaler, out_file)
 
     for epoch in range(start_epoch, start_epoch + num_epochs):
         model.train()

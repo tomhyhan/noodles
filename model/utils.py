@@ -24,7 +24,7 @@ def save_model(model, optimizer, loss_scaler, epoch, out_file):
     }
     torch.save(to_save, out_file)
 
-def load_model(model, optimizer, loss_scaler, epoch, out_file):
+def load_model(model, optimizer, loss_scaler, out_file):
     checkpoint = torch.load(out_file, map_location="cpu")
     model.load_state_dict(checkpoint['model'])
     optimizer.load_state_dict(checkpoint['optimizer'])
