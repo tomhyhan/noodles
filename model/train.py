@@ -58,7 +58,7 @@ def trainer(
     for epoch in range(start_epoch, start_epoch + num_epochs):
         model.train()
         progress_bar = tqdm(train_batch, 
-                       desc=f'Epoch {epoch+1}/{num_epochs}',
+                       desc=f'Epoch {epoch+1}/{start_epoch + num_epochs}',
                        leave=True)
         current_losses = []
         for batch in progress_bar:
