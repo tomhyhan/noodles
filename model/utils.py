@@ -14,13 +14,14 @@ def reset_seed(seed):
     torch.backends.cudnn.deterministic = True  # type: ignore
     torch.backends.cudnn.benchmark = False  # type: ignore
 
-def save_model(model, optimizer, loss_scaler, epoch, out_file):
+def save_model(model, optimizer, loss_scaler, epoch, out_file, best_accuracy):
     
     to_save = {
         'model': model.state_dict(),
         'optimizer': optimizer.state_dict(),
         'scaler': loss_scaler.state_dict(),
-        'epoch': epoch
+        'epoch': epoch,
+        'best_accuracy': best_accuracy
     }
     torch.save(to_save, out_file)
 
