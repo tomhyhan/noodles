@@ -5,7 +5,8 @@ from torch import optim
 from tqdm.auto import tqdm 
 from torch.optim.lr_scheduler import ReduceLROnPlateau, OneCycleLR
 from torchinfo import summary
-from torchvision.models import swin_s, Swin_S_Weights, maxvit_t, MaxVit_T_Weights
+from torchvision.models import Weights, regnet_y_32gf, RegNet_Y_32GF_Weights, swin_s, Swin_S_Weights, maxvit_t, MaxVit_T_Weights 
+
 from torch.amp import GradScaler
 from timm.data.mixup import Mixup
 from timm.loss import LabelSmoothingCrossEntropy, SoftTargetCrossEntropy
@@ -15,6 +16,7 @@ from .utils import load_model
 def trainer(
     model: nn.Module,
     train_batch,
+    train_batch_accuracy,
     val_batch,
     num_epochs,
     lr,
@@ -85,7 +87,7 @@ def trainer(
             if model_config.scheduler == "OneCycleLR":
                 scheduler.step()
 
-        train_accuracy = calc_accuracy(model, train_batch, device=device)
+        train_accuracy = calc_accuracy(model, train_batch_accuracy, device=device)
         val_accuracy = calc_accuracy(model, val_batch, device=device)
         
         train_accuracy_history.append(train_accuracy)
@@ -136,6 +138,13 @@ def create_model(model_name, num_classes):
             in_features=in_features,
             out_features=num_classes
         )
+    elif model_name == "regnet":
+        model = regnet_y_32gf(weights=RegNet_Y_32GF_Weights.IMAGENET1K_SWAG_E2E_V1)
+        model.fc = nn.Linear(in_features=model.fc.in_features, out_features=num_classes)
+    elif model_name == "convnext":
+        pass
+    elif model_name == "efficientnetv2":
+        pass
     return model
 
 def create_scheduler(scheduler_name, optimizer, lr, num_epochs, n_train_batch):
