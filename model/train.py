@@ -144,6 +144,7 @@ def create_model(model_name, num_classes):
         pass
     elif model_name == "efficientnetv2":
         model = efficientnet_v2_m(weights=EfficientNet_V2_M_Weights.IMAGENET1K_V1)
+        in_features = model.classifier[-1].in_features
         model.classifier[-1] = nn.Linear(
             in_features=in_features,
             out_features=num_classes
