@@ -5,7 +5,7 @@ from torch import optim
 from tqdm.auto import tqdm 
 from torch.optim.lr_scheduler import ReduceLROnPlateau, OneCycleLR
 from torchinfo import summary
-from torchvision.models import efficientnet_v2_m, EfficientNet_V2_M_Weights, Weights, regnet_y_32gf, RegNet_Y_32GF_Weights, swin_s, Swin_S_Weights, maxvit_t, MaxVit_T_Weights 
+from torchvision.models import efficientnet_v2_l, EfficientNet_V2_L_Weights, Weights, regnet_y_32gf, RegNet_Y_32GF_Weights, swin_s, Swin_S_Weights, maxvit_t, MaxVit_T_Weights 
 
 from torch.amp import GradScaler
 from timm.data.mixup import Mixup
@@ -143,8 +143,7 @@ def create_model(model_name, num_classes):
     elif model_name == "convnext":
         pass
     elif model_name == "efficientnetv2":
-        model = efficientnet_v2_m(weights=EfficientNet_V2_M_Weights.IMAGENET1K_V1)
-        in_features = model.classifier[-1].in_features
+        model = efficientnet_v2_l(weights=EfficientNet_V2_L_Weights.IMAGENET1K_V1)
         model.classifier[-1] = nn.Linear(
             in_features=in_features,
             out_features=num_classes
