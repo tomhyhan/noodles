@@ -5,7 +5,7 @@ from torch import optim
 from tqdm.auto import tqdm 
 from torch.optim.lr_scheduler import ReduceLROnPlateau, OneCycleLR
 from torchinfo import summary
-from torchvision.models import convnext_large, ConvNeXt_Large_Weights, efficientnet_v2_l, EfficientNet_V2_L_Weights, Weights, regnet_y_32gf, RegNet_Y_32GF_Weights, swin_s, Swin_S_Weights, maxvit_t, MaxVit_T_Weights 
+from torchvision.models import convnext_large, ConvNeXt_Large_Weights, efficientnet_v2_l, EfficientNet_V2_L_Weights, Weights, regnet_y_32gf, RegNet_Y_32GF_Weights, swin_v2_s, Swin_V2_B_Weights, maxvit_t, MaxVit_T_Weights 
 
 from torch.amp import GradScaler
 from timm.data.mixup import Mixup
