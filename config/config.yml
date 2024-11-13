@@ -57,5 +57,18 @@ efficientnetv2:
   scheduler: 'OneCycleLR'
   mixup: 0.8
   cutmix: 1.0
+convnext:
+  model_name: 'convnext_large'
+  batch_size: 100
+  weight_decay: 0.05
+  log_interval: 1
+  min_batas: 0.9
+  max_betas: 0.999
+  warmup_epochs: 32
+  warmup_start_lr: 0.000001
+  output_dir: './convnext'
+  scheduler: 'OneCycleLR'
+  mixup: 0.8
+  cutmix: 1.0
 
 
