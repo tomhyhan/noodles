@@ -5,7 +5,7 @@ from torch import optim
 from tqdm.auto import tqdm 
 from torch.optim.lr_scheduler import ReduceLROnPlateau, OneCycleLR
 from torchinfo import summary
-from torchvision.models import efficientnet_v2_l, EfficientNet_V2_L_Weights, Weights, regnet_y_32gf, RegNet_Y_32GF_Weights, swin_s, Swin_S_Weights, maxvit_t, MaxVit_T_Weights 
+from torchvision.models import convnext_large, ConvNeXt_Large_Weights, efficientnet_v2_l, EfficientNet_V2_L_Weights, Weights, regnet_y_32gf, RegNet_Y_32GF_Weights, swin_s, Swin_S_Weights, maxvit_t, MaxVit_T_Weights 
 
 from torch.amp import GradScaler
 from timm.data.mixup import Mixup
@@ -30,6 +30,8 @@ def trainer(
     loss_scaler = GradScaler('cuda')
 
     summary(model, input_size=(model_config.batch_size, 3, 224, 224))
+
+
 
     optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=model_config.weight_decay)
     scheduler = create_scheduler(model_config.scheduler, optimizer, lr, num_epochs, len(train_batch))
@@ -141,9 +143,15 @@ def create_model(model_name, num_classes):
         model = regnet_y_32gf(weights=RegNet_Y_32GF_Weights.IMAGENET1K_SWAG_E2E_V1)
         model.fc = nn.Linear(in_features=model.fc.in_features, out_features=num_classes)
     elif model_name == "convnext":
-        pass
+        model = convnext_large(weights=ConvNeXt_Large_Weights.IMAGENET1K_V1)
+        in_features = model.classifier[-1].in_features
+        model.classifier[-1] = nn.Linear(
+            in_features=in_features,
+            out_features=num_classes
+        )
     elif model_name == "efficientnetv2":
         model = efficientnet_v2_l(weights=EfficientNet_V2_L_Weights.IMAGENET1K_V1)
+        in_features = model.classifier[-1].in_features
         model.classifier[-1] = nn.Linear(
             in_features=in_features,
             out_features=num_classes
