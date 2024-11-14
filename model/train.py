@@ -5,7 +5,7 @@ from torch import optim
 from tqdm.auto import tqdm 
 from torch.optim.lr_scheduler import ReduceLROnPlateau, OneCycleLR
 from torchinfo import summary
-from torchvision.models import convnext_large, ConvNeXt_Large_Weights, efficientnet_v2_l, EfficientNet_V2_L_Weights, Weights, regnet_y_32gf, RegNet_Y_32GF_Weights, swin_v2_b, Swin_V2_B_Weights, maxvit_t, MaxVit_T_Weights 
+from torchvision.models import convnext_large, ConvNeXt_Large_Weights, efficientnet_v2_l, EfficientNet_V2_L_Weights, Weights, regnet_y_32gf, RegNet_Y_32GF_Weights, swin_b, Swin_B_Weights, maxvit_t, MaxVit_T_Weights 
 
 from torch.amp import GradScaler
 from timm.data.mixup import Mixup
@@ -130,7 +130,7 @@ def trainer(
 
 def create_model(model_name, num_classes):
     if model_name == "swin":
-        model = swin_v2_b(weights=Swin_V2_B_Weights.IMAGENET1K_V1)
+        model = swin_b(weights=Swin_B_Weights.IMAGENET1K_V1)
         model.head = nn.Linear(model.head.in_features, num_classes)
     elif model_name == "maxvit":
         model = maxvit_t(weights=MaxVit_T_Weights.IMAGENET1K_V1)
