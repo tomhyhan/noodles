@@ -2,7 +2,7 @@ seed: 42
 data_path: "./pasta_data.csv"
 image_size: 224
 n_splits: 5
-num_epochs: 7
+num_epochs: 10
 lr: 0.0001
 num_classes: 16
 swin:
