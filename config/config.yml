@@ -59,7 +59,7 @@ efficientnetv2:
   cutmix: 1.0
 convnext:
   model_name: 'convnext_large'
-  batch_size: 90
+  batch_size: 70
   weight_decay: 0.05
   log_interval: 1
   min_batas: 0.9
