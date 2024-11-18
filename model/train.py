@@ -25,13 +25,12 @@ def trainer(
     early_stop=5,
     resume=False,
     out_file=None,
-    num_classes=16
+    num_classes=16,
+    eval_mode=False
 ):
     loss_scaler = GradScaler('cuda')
 
     summary(model, input_size=(model_config.batch_size, 3, 224, 224))
-
-
 
     optimizer = optim.AdamW(model.parameters(), lr=lr, weight_decay=model_config.weight_decay)
     scheduler = create_scheduler(model_config.scheduler, optimizer, lr, num_epochs, len(train_batch))
@@ -89,7 +88,10 @@ def trainer(
             if model_config.scheduler == "OneCycleLR":
                 scheduler.step()
 
-        train_accuracy = calc_accuracy(model, train_batch_accuracy, device=device)
+        if eval_mode:
+            train_accuracy = 0
+        else:
+            train_accuracy = calc_accuracy(model, train_batch_accuracy, device=device)
         val_accuracy = calc_accuracy(model, val_batch, device=device)
         
         train_accuracy_history.append(train_accuracy)
