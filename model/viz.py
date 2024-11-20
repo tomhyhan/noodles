@@ -48,3 +48,6 @@ def draw_train_val_accuracy(training_acc, val_acc):
     
     
     plt.show()
+
+def show_image(image):
+    pass

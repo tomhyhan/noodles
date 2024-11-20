@@ -27,6 +27,8 @@ CLASS_ENCODER = {
         "Fregola": 15
     }
 
+CLASS_DECODER = { i:noodle for noodle, i in CLASS_ENCODER.items()}
+
 def image_search(search_term, api_key):
     search_url = "https://api.bing.microsoft.com/v7.0/images/search"
     print(search_term, api_key)
