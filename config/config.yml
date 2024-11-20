@@ -3,7 +3,7 @@ data_path: "./pasta_data.csv"
 image_size: 224
 n_splits: 5
 num_epochs: 20
-lr: 0.0001
+lr: 0.0003
 num_classes: 16
 swin:
   model_name: 'swin_v2_b'
@@ -41,7 +41,7 @@ regnet:
   warmup_epochs: 32
   warmup_start_lr: 0.000001
   output_dir: './regnet'
-  scheduler: 'OneCycleLR'
+  scheduler: 'ReduceLROnPlateau'
   mixup: 0.8
   cutmix: 1.0
 efficientnetv2:
